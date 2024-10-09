@@ -1,0 +1,385 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "Kd2iDDenW_Ss"
+      },
+      "outputs": [],
+      "source": [
+        "!pip install -q pyomo"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!apt-get install -y -qq coinor-cbc"
+      ],
+      "metadata": {
+        "collapsed": true,
+        "id": "cS-GtuI5XfN0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Include Pyomo"
+      ],
+      "metadata": {
+        "id": "4muJbp7phbWI"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pyomo.environ as pyo"
+      ],
+      "metadata": {
+        "id": "XSmcs5ibXm7b"
+      },
+      "execution_count": 24,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Define sets, indices"
+      ],
+      "metadata": {
+        "id": "b3rxvU1MhfQG"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#sets\n",
+        "Source={'Saudi','Venezuela'}\n",
+        "Products={'Gasoline','Jet Fuel','Lubricant'}\n",
+        "\n",
+        "#input parameters\n",
+        "capacity={'Saudi':9,'Venezuela':6}\n",
+        "cost={'Saudi':20,'Venezuela':15}\n",
+        "demand={'Gasoline':2,'Jet Fuel':1.5,'Lubricant':0.5}\n",
+        "transform={\n",
+        "     ('Saudi', 'Gasoline'): 0.3,\n",
+        "    ('Saudi', 'Jet Fuel'): 0.4,\n",
+        "    ('Saudi', 'Lubricant'): 0.2,\n",
+        "    ('Venezuela', 'Gasoline'): 0.4,\n",
+        "    ('Venezuela', 'Jet Fuel'): 0.2,\n",
+        "    ('Venezuela', 'Lubricant'): 0.3\n",
+        "}"
+      ],
+      "metadata": {
+        "id": "8Dijc_ehXwwB"
+      },
+      "execution_count": 25,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Create the model instance"
+      ],
+      "metadata": {
+        "id": "wNFIZG4sez1J"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model = pyo.ConcreteModel()"
+      ],
+      "metadata": {
+        "collapsed": true,
+        "id": "M7D5CgmFaYN_"
+      },
+      "execution_count": 26,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Define variables"
+      ],
+      "metadata": {
+        "id": "nnx35W6me7Yu"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.x = pyo.Var( Source, within=pyo.NonNegativeReals)\n",
+        "model.x.pprint()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "gsxsZeMFe7Ad",
+        "outputId": "a3037e84-8c83-4d0c-9ca0-4c719c3eb988"
+      },
+      "execution_count": 27,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "x : Size=2, Index={Saudi, Venezuela}\n",
+            "    Key       : Lower : Value : Upper : Fixed : Stale : Domain\n",
+            "        Saudi :     0 :  None :  None : False :  True : NonNegativeReals\n",
+            "    Venezuela :     0 :  None :  None : False :  True : NonNegativeReals\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Define objective function"
+      ],
+      "metadata": {
+        "id": "ZOmCXWw1fOOo"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.obj = pyo.Objective(\n",
+        "    expr = sum( cost[i]*model.x[i] for i in Source ),\n",
+        "    sense = pyo.minimize )\n",
+        "\n",
+        "model.obj.pprint()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "6P3QzZYofH9q",
+        "outputId": "44cd05cf-332e-4c4a-f3e5-f85ae5c31e97"
+      },
+      "execution_count": 28,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "obj : Size=1, Index=None, Active=True\n",
+            "    Key  : Active : Sense    : Expression\n",
+            "    None :   True : minimize : 20*x[Saudi] + 15*x[Venezuela]\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Define capacity constraints"
+      ],
+      "metadata": {
+        "id": "yyiRGUZ9fV7h"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.constraint_capacity = pyo.ConstraintList()\n",
+        "for i in Source:\n",
+        "  model.constraint_capacity.add(model.x[i] <= capacity[i])\n",
+        "model.constraint_capacity.pprint()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vXSsjPNifZeq",
+        "outputId": "6a2a06d1-323c-4b85-fdd9-28032d96f65c"
+      },
+      "execution_count": 29,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "constraint_capacity : Size=2, Index={1, 2}, Active=True\n",
+            "    Key : Lower : Body         : Upper : Active\n",
+            "      1 :  -Inf :     x[Saudi] :   9.0 :   True\n",
+            "      2 :  -Inf : x[Venezuela] :   6.0 :   True\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Define demand constraints"
+      ],
+      "metadata": {
+        "id": "V8mdK2tIfut2"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "model.constraint_demand = pyo.ConstraintList()\n",
+        "for j in Products:\n",
+        "  model.constraint_demand.add(sum(transform[i,j]*model.x[i] for i in Source) >= demand[j])\n",
+        "model.constraint_demand.pprint()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "collapsed": true,
+        "id": "x90XU9xAfuC-",
+        "outputId": "856272ac-c53b-4c1f-91ab-cf9ccc196532"
+      },
+      "execution_count": 30,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "constraint_demand : Size=3, Index={1, 2, 3}, Active=True\n",
+            "    Key : Lower : Body                            : Upper : Active\n",
+            "      1 :   0.5 : 0.2*x[Saudi] + 0.3*x[Venezuela] :  +Inf :   True\n",
+            "      2 :   2.0 : 0.3*x[Saudi] + 0.4*x[Venezuela] :  +Inf :   True\n",
+            "      3 :   1.5 : 0.4*x[Saudi] + 0.2*x[Venezuela] :  +Inf :   True\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Define solver environment"
+      ],
+      "metadata": {
+        "id": "rYGPkN2ihQs5"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "opt = pyo.SolverFactory('cbc')\n",
+        "model.pprint()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "WRll2tg3hShm",
+        "outputId": "685fe497-e48f-4418-ff1a-49510520f5bf"
+      },
+      "execution_count": 38,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "1 Var Declarations\n",
+            "    x : Size=2, Index={Saudi, Venezuela}\n",
+            "        Key       : Lower : Value : Upper : Fixed : Stale : Domain\n",
+            "            Saudi :     0 :   2.0 :  None : False : False : NonNegativeReals\n",
+            "        Venezuela :     0 :   3.5 :  None : False : False : NonNegativeReals\n",
+            "\n",
+            "1 Objective Declarations\n",
+            "    obj : Size=1, Index=None, Active=True\n",
+            "        Key  : Active : Sense    : Expression\n",
+            "        None :   True : minimize : 20*x[Saudi] + 15*x[Venezuela]\n",
+            "\n",
+            "2 Constraint Declarations\n",
+            "    constraint_capacity : Size=2, Index={1, 2}, Active=True\n",
+            "        Key : Lower : Body         : Upper : Active\n",
+            "          1 :  -Inf :     x[Saudi] :   9.0 :   True\n",
+            "          2 :  -Inf : x[Venezuela] :   6.0 :   True\n",
+            "    constraint_demand : Size=3, Index={1, 2, 3}, Active=True\n",
+            "        Key : Lower : Body                            : Upper : Active\n",
+            "          1 :   0.5 : 0.2*x[Saudi] + 0.3*x[Venezuela] :  +Inf :   True\n",
+            "          2 :   2.0 : 0.3*x[Saudi] + 0.4*x[Venezuela] :  +Inf :   True\n",
+            "          3 :   1.5 : 0.4*x[Saudi] + 0.2*x[Venezuela] :  +Inf :   True\n",
+            "\n",
+            "4 Declarations: x obj constraint_capacity constraint_demand\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Solve the model"
+      ],
+      "metadata": {
+        "id": "Uc4XWNlQibBk"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "opt_solution = opt.solve(model)"
+      ],
+      "metadata": {
+        "id": "0NzXgiuKienT"
+      },
+      "execution_count": 39,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Print solution"
+      ],
+      "metadata": {
+        "id": "VlyibPPjhzh8"
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Print the values of the decision variables\n",
+        "print(\"\\nSupply amounts:\")\n",
+        "for i in Source:\n",
+        "    print(f\"{i}: {model.x[i].value}\")\n",
+        "\n",
+        "print(f\"Total cost: {model.obj()}\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "PXg9VjHYh1f1",
+        "outputId": "a9851c3c-6668-446e-bc8f-5ea2b569068b"
+      },
+      "execution_count": 40,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "\n",
+            "Supply amounts:\n",
+            "Saudi: 2.0\n",
+            "Venezuela: 3.5\n",
+            "Total cost: 92.5\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
