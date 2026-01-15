@@ -21,5 +21,5 @@ if st.button('Calculate EOQ with backorders'):
     Q,s,cost=economic_order_quantity_with_backorders(fixedCost,holdingCost,stockOutCost,demandRate)
     st.write(f'Economic Order Quantity (Q): {Q:.2f}')
     st.write(f'Total Inventory Cost: {cost:.2f}')
-    st.write(f'The stock out shortege rate is:{s:.2f}')
-    st.write(f'Total inventory holding cost is:{cost-s:.2f}')
+    st.write(f'The stock out shortege rate: {s:.2f}')
+    st.write(f'Total inventory holding cost: {cost-s:.2f}')
