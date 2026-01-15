@@ -1,5 +1,6 @@
 #import the package and bring the content
 import stockpyl
+import pandas as pd
 
 import streamlit as st
 
@@ -8,12 +9,18 @@ from stockpyl.eoq import joint_replenishment_problem_silver_heuristic
 
 st.title('Joint Replenishment Optimizer (Silver\'s Heuristic)')
 
-shared_fixed_cost = st.number_input('Enter the shared fixed ordering cost:', value=600.0, format="%.2f")
-individual_fixed_costs = st.number_input('Enter the individual fixed ordering costs:', value=[120.0, 840.0, 300.0], format="%.2f")
-holding_costs = st.number_input('Enter the holding costs:', value=[160.0, 20.0, 50.0], format="%.2f")
-demand_rates = st.number_input('Enter the demand rates:', value=[1.0, 1.0, 1.0], format="%.2f")
 
+df = pd.DataFrame({'Individual Fixed Costs': [120.0, 840.0, 300.0]})
+edited_df = st.data_editor(df)
+individual_fixed_costs = edited_df['Individual Fixed Costs'].tolist()
 
+df2 = pd.DataFrame({'Individual Holding Costs': [160.0, 20.0, 50.0]})
+edited_df2 = st.data_editor(df2)
+individual_holding_costs = edited_df2['Individual Holding Costs'].tolist()
+
+df3 = pd.DataFrame({'Individual Demand Rates': [1.0, 1.0.0, 1.0]})
+edited_df3 = st.data_editor(df3)
+demand_rates = edited_df['Demand Rates'].tolist()
 
 # Calling the Solver's function with given parameters
 
