@@ -13,5 +13,5 @@ st.write('- **EOQ Calculator**: Calculate the Economic Order Quantity for invent
 st.write('- **EOQ with Backorders Calculator**: Calculate the Economic Order Quantity')
 st.write('')
 st.write('More tools coming soon!')
-st.write('contact: cemalettin.ozturk01@icloud.com')
+st.write('contact: cemalettin.ozturk01@gmail.com')
 
