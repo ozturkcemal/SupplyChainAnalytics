@@ -19,6 +19,7 @@ stockOutCost=st.number_input('Enter the stock out cost:', value=20.0, format="%.
 
 if st.button('Calculate EOQ with backorders'):
     Q,s,cost=economic_order_quantity_with_backorders(fixedCost,holdingCost,stockOutCost,demandRate)
-    st.write("The economic order quantity is",Q)
-    st.write("The stock out shortege rate is",s)
-    st.write("The cost of inventory is",cost)
+    st.write(f'Economic Order Quantity (Q): {Q:.2f}')
+    st.write(f'Total Inventory Cost: {cost:.2f}')
+    st.write(f'The stock out shortege rate is:{s:.2f}')
+    st.write(f'Total inventory holding cost is:{cost-s:.2f}')
