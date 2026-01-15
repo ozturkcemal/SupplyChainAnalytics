@@ -34,7 +34,8 @@ Q, T, m_n, cost = joint_replenishment_problem_silver_heuristic(
     demand_rates
 )
 
-st.write(f'Order quantities are: {Q}')
-st.write(f'Order cycle time is: {T}')
-st.write(f'Order multiples is: {m_n}')
-st.write(f'The total cost is: {cost}')
+if st.button('Calculate Joint Replenishment'):
+    st.write(f'Order quantities are: {Q}')
+    st.write(f'Order cycle time is: {T}')
+    st.write(f'Order multiples is: {m_n}')
+    st.write(f'The total cost is: {cost}')
