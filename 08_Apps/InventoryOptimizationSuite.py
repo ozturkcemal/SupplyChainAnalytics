@@ -1,8 +1,8 @@
 import streamlit as st
 
-st.title('Supply Chain Analytics Apps')
+st.title('Inventory Optimization Apps')
 
-st.write('Welcome to the Supply Chain Analytics application suite!')
+st.write('Welcome to the Inventory Optimization application suite!')
 
 st.write('')
 st.write('## Available Tools')
