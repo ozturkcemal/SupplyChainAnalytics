@@ -36,6 +36,7 @@ Q, T, m_n, cost = joint_replenishment_problem_silver_heuristic(
 
 if st.button('Calculate Joint Replenishment'):
     st.write(f'Order quantities are: [{", ".join([f"{q:.2f}" for q in Q])}]')
-    st.write(f'Order cycle time is: [{", ".join([f"{t:.2f}" for t in T])}]')
+    st.write(f'Order cycle time is: {T:.2f}') 
     st.write(f'Order multiples is: {m_n}')
     st.write(f'The total cost is: {cost:.2f}')
+
