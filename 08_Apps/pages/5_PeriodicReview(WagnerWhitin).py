@@ -13,7 +13,7 @@ holdingCost = st.number_input('Enter the holding cost:', value=1.0, format="%.2f
 fixedCost = st.number_input('Enter the fixed ordering cost:', value=100.0, format="%.2f")
 
 # Demand input using dataframe - dynamically create based on nbPeriods
-period_list = list(range(1, int(nbPeriods) + 1))
+period_list = list(range(0, int(nbPeriods)))
 demand_default = [10.0] * int(nbPeriods)  # Default demand of 10.0 for each period
 df_demand = pd.DataFrame({'Period': period_list, 'Demand': demand_default})
 edited_df_demand = st.data_editor(df_demand)
