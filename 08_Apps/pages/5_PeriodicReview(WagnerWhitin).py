@@ -35,7 +35,7 @@ if st.button('Calculate Periodic Review'):
     
     st.subheader('Cost Carried to Next Period')
     df_carried = pd.DataFrame({
-        'Period': list(range(, len(carriedCost))),
+        'Period': list(range(1, len(carriedCost))),
         'Carried Cost': [f"{c:.2f}" for c in carriedCost]
     })
     st.dataframe(df_carried)
