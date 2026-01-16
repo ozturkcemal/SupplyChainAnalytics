@@ -19,7 +19,7 @@ df_demand = pd.DataFrame({'Period': period_list, 'Demand': demand_default})
 edited_df_demand = st.data_editor(df_demand)
 demand = edited_df_demand['Demand'].tolist()
 
-# Calling the Solver's function with given parameters
+# Calling the WW function with given parameters
 if st.button('Calculate Periodic Review'):
     Q, cost, carriedCost, nextOrder = wagner_whitin(int(nbPeriods), holdingCost, fixedCost, demand)
     
@@ -35,7 +35,7 @@ if st.button('Calculate Periodic Review'):
     
     st.subheader('Cost Carried to Next Period')
     df_carried = pd.DataFrame({
-        'Period': list(range(1, len(carriedCost) + 1)),
+        'Period': list(range(, len(carriedCost))),
         'Carried Cost': [f"{c:.2f}" for c in carriedCost]
     })
     st.dataframe(df_carried)
