@@ -12,6 +12,7 @@ st.write('Use the sidebar to navigate between different supply chain analytics t
 st.write('- **EOQ Calculator**: Calculate the Economic Order Quantity for inventory management')
 st.write('- **EOQ with Backorders Calculator**: Calculate the Economic Order Quantity')
 st.write('- **Joint Replenishment Optimizer**: Calculate the Economic Order Quantity for Joint Replenishment')
+st.write('- **News Vendor Optimizer')
 st.write('')
 st.write('More tools coming soon!')
 st.write('contact: cemalettin.ozturk01@gmail.com')
