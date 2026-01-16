@@ -5,7 +5,7 @@ import streamlit as st
 # bringing newsvendor_normal function of the module
 from stockpyl.newsvendor import newsvendor_normal
 
-st.title("Newsvendor Problem");
+st.title("News Vendor Inventory Optimization Problem");
 
 holdingCost=st.number_input("Enter the holding cost: ",value=20.0, format="%.2f")
 stockoutCost=st.number_input("Enter the fstock out cost: ",value=10.0, format="%.2f")
