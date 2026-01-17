@@ -15,7 +15,7 @@ if st.button('Calculate EOQ'):
 st.markdown("---")
 st.markdown("**References**")
 st.markdown(
-    "[1] Economic order quantity. Available at: "
+    "[1] Economic order quantity. "
     "https://en.wikipedia.org/wiki/Economic_order_quantity"
 )
 st.markdown(
