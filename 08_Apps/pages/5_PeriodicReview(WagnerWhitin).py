@@ -41,3 +41,14 @@ if st.button('Calculate Periodic Review'):
         'Period': list(range(0, int(nbPeriods))),
         'Next Order Period': nextOrder[:int(nbPeriods)]    })
     st.dataframe(df_nextorder)
+
+st.markdown("---")
+st.markdown("**References**")
+st.markdown(
+    "[1] Dynamic lot-size model. Available at: "
+    "https://en.wikipedia.org/wiki/Dynamic_lot-size_model"
+)
+st.markdown(
+    "[2] Snyder, Lawrence V. 2023. *Stockpyl*. GitHub repository. "
+    "Available at: https://github.com/LarrySnyder/stockpyl"
+)
