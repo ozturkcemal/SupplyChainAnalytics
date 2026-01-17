@@ -38,7 +38,6 @@ if st.button('Calculate Periodic Review'):
     
     st.subheader('Next Order Period')
     df_nextorder = pd.DataFrame({
-        'Period': list(range(0, len(nextOrder))),
-        'Next Order Period': nextOrder
-    })
+        'Period': list(range(0, int(nbPeriods))),
+        'Next Order Period': nextOrder[:int(nbPeriods)]    })
     st.dataframe(df_nextorder)
