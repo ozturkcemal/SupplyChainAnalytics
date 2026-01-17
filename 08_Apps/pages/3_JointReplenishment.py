@@ -40,3 +40,13 @@ if st.button('Calculate Joint Replenishment'):
     st.write(f'Order multiples is: {m_n}')
     st.write(f'The total cost is: {cost:.2f}')
 
+st.markdown("---")
+st.markdown("**References**")
+st.markdown(
+    "[1] Silver, Edward A. 1976. *Joint Replenishment Optimizer*. Management Science 22(12):1351-1361. "
+    "Available at: https://pubsonline.informs.org/doi/abs/10.1287/mnsc.22.12.1351"
+)
+st.markdown(
+    "[2] Snyder, Lawrence V. 2023. *Stockpyl*. GitHub repository. "
+    "Available at: https://github.com/LarrySnyder/stockpyl"
+)
