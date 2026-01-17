@@ -28,7 +28,7 @@ if st.button('Calculate Periodic Review'):
     # Display results in dataframes
     st.subheader('Order Quantities by Period')
     df_results = pd.DataFrame({
-        'Period': list(range(0, int(nbPeriods)),        'Quantity Ordered (Q)': [f"{q:.2f}" for q in Q]
+        'Period': list(range(0, int(nbPeriods))),        'Quantity Ordered (Q)': [f"{q:.2f}" for q in Q]
     })
     st.dataframe(df_results)
     
