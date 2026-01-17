@@ -23,3 +23,14 @@ if st.button('Calculate EOQ with backorders'):
     st.write(f'Total Inventory Cost: {cost:.2f}')
     st.write(f'The stock out shortege rate: {s:.2f}')
     st.write(f'Total inventory holding cost: {cost-s:.2f}')
+
+st.markdown("---")
+st.markdown("**References**")
+st.markdown(
+    "[1] Economic order quantity with backorders. "
+    "https://en.wikipedia.org/wiki/Economic_order_quantity"
+)
+st.markdown(
+    "[2] Snyder, Lawrence V. 2023. *Stockpyl*. GitHub repository. "
+    "Available at: https://github.com/LarrySnyder/stockpyl"
+)
