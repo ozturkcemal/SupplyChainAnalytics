@@ -16,3 +16,14 @@ if st.button("Compute Optimal Stock Level and Inventory Cost"):
     stockLevel,cost=newsvendor_normal(holdingCost,stockoutCost,demandMean,demandStd)
     st.write(f'The optimal stock level is {stockLevel:.2f}')
     st.write(f'The cost of inventory is {cost:.2f}')
+
+st.markdown("---")
+st.markdown("**References**")
+st.markdown(
+    "[1] Newsvendor model "
+    "https://en.wikipedia.org/wiki/Newsvendor_model"
+)
+st.markdown(
+    "[2] Snyder, Lawrence V. 2023. *Stockpyl*. GitHub repository. "
+    "Available at: https://github.com/LarrySnyder/stockpyl"
+)
