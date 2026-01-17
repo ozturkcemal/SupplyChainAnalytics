@@ -28,8 +28,7 @@ if st.button('Calculate Periodic Review'):
     # Display results in dataframes
     st.subheader('Order Quantities by Period')
     df_results = pd.DataFrame({
-        'Period': list(range(0, int(nbPeriods))),        'Quantity Ordered (Q)': [f"{q:.2f}" for q i[:int(nbPeriods)]n Q]
-    })
+        'Period': list(range(0, int(nbPeriods))),        'Quantity Ordered (Q)': [f"{q:.2f}" for q in Q[:int(nbPeriods)]]    })
     st.dataframe(df_results)
     
     st.subheader('Cost Carried to Next Period')
