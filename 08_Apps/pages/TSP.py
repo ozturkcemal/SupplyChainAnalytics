@@ -43,7 +43,7 @@ if api_key:
         st.write(f"- {coord[2]} ({coord[1]:.4f}, {coord[0]:.4f})")
     
     # Animation speed control
-    animation_speed = st.slider('Animation Speed (seconds per city)', 0.1, 2.0, 0.3, 0.1)
+    animation_speed = st.slider('Animation Speed (seconds per city)', 0.1, 2.0, 0.5, 0.1)
     
     if st.button('Solve TSP', type='primary'):
         try:
@@ -157,15 +157,16 @@ if api_key:
         
         # Animate route city-by-city
         if st.session_state.animate:
-            map_placeholder = st.empty()
-            distance_placeholder = st.empty()
-            progress_bar = st.progress(0)
-            status_text = st.empty()
+            progress_text = st.empty()
             
             accumulated_distance = 0
             
             # Animate each city-to-city segment
             for seg_idx in range(len(results['city_segments'])):
+                # Show current city being visited
+                current_city = results['optimized_coords'][seg_idx + 1][2]
+                progress_text.info(f"📍 Visiting: {current_city} ({seg_idx + 1}/{len(results['city_segments'])})")
+                
                 # Create map
                 current_map = folium.Map(
                     location=[results['optimized_coords'][0][1], results['optimized_coords'][0][0]], 
@@ -197,28 +198,22 @@ if api_key:
                     idx2 = results['coordinate_to_index'][(lon2, lat2)]
                     accumulated_distance += results['distance_matrix'][idx1][idx2]
                 
-                # Show current city being visited
-                current_city = results['optimized_coords'][seg_idx + 1][2]
-                status_text.info(f"Visiting: {current_city}")
+                # Display map - this will keep previous map visible until new one loads
+                st_folium(current_map, width=700, height=500, key=f"map_{seg_idx}")
                 
-                # Update displays
-                with map_placeholder:
-                    st_folium(current_map, width=700, height=500, key=f"map_{seg_idx}")
+                # Show distance metric
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.metric('Distance Traveled', f"{accumulated_distance / 1000:.2f} km")
+                with col2:
+                    st.metric('Remaining', f"{(results['total_distance'] - accumulated_distance) / 1000:.2f} km")
                 
-                with distance_placeholder:
-                    st.metric('Distance Traveled', 
-                             f"{accumulated_distance / 1000:.2f} km", 
-                             f"of {results['total_distance'] / 1000:.2f} km total")
-                
-                progress_bar.progress((seg_idx + 1) / len(results['city_segments']))
-                
-                # Delay before next segment
+                # Delay AFTER showing the map
                 if seg_idx < len(results['city_segments']) - 1:
                     time.sleep(results['animation_speed'])
             
             st.session_state.animate = False
-            status_text.empty()
-            progress_bar.empty()
+            progress_text.empty()
             
         else:
             # Show final complete route
