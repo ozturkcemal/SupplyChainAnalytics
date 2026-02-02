@@ -159,4 +159,4 @@ if st.session_state.results:
     
     st_folium(fmap, width=700, height=500)
 else:
-    st.info('👆 Please enter your OpenRouteService API key to start')
+    st.info('👆 Please enter your OpenRouteService API key to start (https://openrouteservice.org/)')
