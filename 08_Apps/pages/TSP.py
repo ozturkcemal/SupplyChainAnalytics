@@ -9,6 +9,22 @@ import pandas as pd
 st.title('TSP Solver')
 st.write('Calculate the shortest route for a single vehicle to visit multiple locations')
 
+st.markdown("---")
+st.markdown("**References**")
+st.markdown(
+    "[1] Traveling Salesman Problem. "
+    "https://www.math.uwaterloo.ca/tsp/"
+)
+st.markdown(
+    "[2] Google OR-Tools. "
+    "https://developers.google.com/optimization/routing/tsp"
+)
+st.markdown(
+    "[3] OpenRouteService. "
+    "https://openrouteservice.org/"
+)
+st.markdown("---")
+
 # Initialize session state
 if 'results' not in st.session_state:
     st.session_state.results = None
