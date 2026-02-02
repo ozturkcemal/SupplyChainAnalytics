@@ -33,8 +33,18 @@ api_key = st.text_input('API Key:', type='password', help='Get your free API key
 
 if api_key:
     client = openrouteservice.Client(key=api_key)
+
+        # Transport profile selection
+    st.header('Step 2: Select Transport Profile')
+    transport_profile = st.selectbox(
+        'Select routing profile:',
+        options=['foot-walking', 'driving-car', 'cycling-regular', 'driving-hgv'],
+        index=0,
+        help='Choose how the route should be calculated'
+    )
+
     
-    st.header('Step 2: Locations')
+    st.header('Step 3: Locations')
     st.write('Using default Cork pub locations:')
     
     for coord in default_coordinates:
@@ -46,7 +56,7 @@ if api_key:
                 # Get distance matrix
                 matrix = client.distance_matrix(
                     locations=[coord[:2] for coord in default_coordinates],
-                    profile='foot-walking',
+                    profile=transport_profile,
                     metrics=['distance'],
                     units='m'
                 )
@@ -91,7 +101,7 @@ if api_key:
                     # Get actual route from ORS
                     route = client.directions(
                         coordinates=[coord[:2] for coord in optimized_coords],
-                        profile='foot-walking',
+                        profile=transport_profile,
                         format='geojson'
                     )
                     
