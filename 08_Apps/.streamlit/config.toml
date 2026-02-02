@@ -1,2 +1,2 @@
 [server]
-mainFile = "08_Apps/InventoryOptimizationSuite.py"
+mainfile = "08_Apps/RoutingApps.py"
