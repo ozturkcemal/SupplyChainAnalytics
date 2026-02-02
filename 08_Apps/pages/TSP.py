@@ -75,55 +75,55 @@ if api_key:
     
     else:  # Manual Entry
     
-    # Initialize session state for locations
-    if 'num_locations' not in st.session_state:
-        st.session_state.num_locations = 5
-    if 'locations_df' not in st.session_state:
-        st.session_state.locations_df = pd.DataFrame({
-            'Name': [''] * st.session_state.num_locations,
-            'Longitude': [0.0] * st.session_state.num_locations,
-            'Latitude': [0.0] * st.session_state.num_locations
-        })
-    
-    # Ask for number of locations
-    num_locations = st.number_input(
-        'Number of locations (N):',
-        min_value=2,
-        max_value=50,
-        value=st.session_state.num_locations,
-        step=1,
-        help='Enter the number of locations to visit'
-    )
-    
-    # Update dataframe if number changed
-    if num_locations != st.session_state.num_locations:
-        st.session_state.num_locations = num_locations
-        st.session_state.locations_df = pd.DataFrame({
-            'Name': [''] * num_locations,
-            'Longitude': [0.0] * num_locations,
-            'Latitude': [0.0] * num_locations
-        })
-    
-    # Display data editor
-    st.write('Enter location details:')
-    edited_df = st.data_editor(
-        st.session_state.locations_df,
-        num_rows="fixed",
-        use_container_width=True,
-        column_config={
-            "Name": st.column_config.TextColumn("Name", required=True),
-            "Longitude": st.column_config.NumberColumn("Longitude", required=True, format="%.6f"),
-            "Latitude": st.column_config.NumberColumn("Latitude", required=True, format="%.6f")
-        }
-    )
-    
-    st.session_state.locations_df = edited_df
-    
-    # Convert dataframe to coordinates list format
-    coordinates = []
-    for idx, row in edited_df.iterrows():
-        if row['Name'] and row['Longitude'] != 0.0 and row['Latitude'] != 0.0:
-            coordinates.append([row['Longitude'], row['Latitude'], row['Name']])    
+        # Initialize session state for locations
+        if 'num_locations' not in st.session_state:
+            st.session_state.num_locations = 5
+        if 'locations_df' not in st.session_state:
+            st.session_state.locations_df = pd.DataFrame({
+                'Name': [''] * st.session_state.num_locations,
+                'Longitude': [0.0] * st.session_state.num_locations,
+                'Latitude': [0.0] * st.session_state.num_locations
+            })
+        
+        # Ask for number of locations
+        num_locations = st.number_input(
+            'Number of locations (N):',
+            min_value=2,
+            max_value=50,
+            value=st.session_state.num_locations,
+            step=1,
+            help='Enter the number of locations to visit'
+        )
+        
+        # Update dataframe if number changed
+        if num_locations != st.session_state.num_locations:
+            st.session_state.num_locations = num_locations
+            st.session_state.locations_df = pd.DataFrame({
+                'Name': [''] * num_locations,
+                'Longitude': [0.0] * num_locations,
+                'Latitude': [0.0] * num_locations
+            })
+        
+        # Display data editor
+        st.write('Enter location details:')
+        edited_df = st.data_editor(
+            st.session_state.locations_df,
+            num_rows="fixed",
+            use_container_width=True,
+            column_config={
+                "Name": st.column_config.TextColumn("Name", required=True),
+                "Longitude": st.column_config.NumberColumn("Longitude", required=True, format="%.6f"),
+                "Latitude": st.column_config.NumberColumn("Latitude", required=True, format="%.6f")
+            }
+        )
+        
+        st.session_state.locations_df = edited_df
+        
+        # Convert dataframe to coordinates list format
+        coordinates = []
+        for idx, row in edited_df.iterrows():
+            if row['Name'] and row['Longitude'] != 0.0 and row['Latitude'] != 0.0:
+                coordinates.append([row['Longitude'], row['Latitude'], row['Name']])    
     if st.button('Solve TSP', type='primary'):
         try:
             with st.spinner('Calculating optimal route...'):
