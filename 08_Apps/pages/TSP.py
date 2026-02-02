@@ -20,7 +20,7 @@ api_key = st.text_input('API Key:', type='password', help='Get your free API key
 if api_key:
     client = openrouteservice.Client(key=api_key)
 
-        # Transport profile selection
+    # Transport profile selection
     st.header('Step 2: Select Transport Profile')
     transport_profile = st.selectbox(
         'Select routing profile:',
@@ -32,7 +32,7 @@ if api_key:
     
     st.header('Step 3: Locations')
 
-        # Option to upload CSV or use manual entry
+    # Option to upload CSV or use manual entry
     st.write('**Choose input method:**')
     input_method = st.radio(
         'Select how to enter locations:',
@@ -74,7 +74,6 @@ if api_key:
                 st.error(f'Error reading CSV file: {str(e)}')
     
     else:  # Manual Entry
-    
         # Initialize session state for locations
         if 'num_locations' not in st.session_state:
             st.session_state.num_locations = 5
