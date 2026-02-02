@@ -13,7 +13,10 @@ st.write('  - **EOQ with Backorders Calculator**: Calculate the Economic Order Q
 st.write('  - **Joint Replenishment Optimizer**: Calculate the Economic Order Quantity for Joint Replenishment')
 st.write('  - **News Vendor Optimizer**: Calculate the inventory level for News Vendor problem')
 st.write('  - **Periodic Review Optimizer**: Calculate the Wagner Whitin algorithm for periodic replenishment')
-st.write('- **RoutingApps**: Solve Vehicle Routing Problems and Traveling Salesman Problems')
+
+st.write('### Routing Apps')
+
+st.write('  - Traveling Salesman Problems')
 st.write('')
 st.write('More tools coming soon!')
 st.write('contact: cemalettin.ozturk01@gmail.com')
