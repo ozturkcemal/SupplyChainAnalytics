@@ -117,12 +117,14 @@ if api_key:
         )
         
         st.session_state.locations_df = edited_df
-        
-        # Convert dataframe to coordinates list format
-        coordinates = []
-        for idx, row in edited_df.iterrows():
+    
+    # Convert dataframe to coordinates list format (works for both input methods)
+    coordinates = []
+    if 'locations_df' in st.session_state:
+        for idx, row in st.session_state.locations_df.iterrows():
             if row['Name'] and row['Longitude'] != 0.0 and row['Latitude'] != 0.0:
-                coordinates.append([row['Longitude'], row['Latitude'], row['Name']])    
+                coordinates.append([row['Longitude'], row['Latitude'], row['Name']])
+    
     if st.button('Solve TSP', type='primary'):
         try:
             with st.spinner('Calculating optimal route...'):
