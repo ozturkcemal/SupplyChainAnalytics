@@ -183,7 +183,7 @@ if st.session_state.results:
     )
     
     # Add numbered markers
-    for idx, (lon, lat, label) in enumerate(results['optimized_coords']):
+    for idx, (lon, lat, label) in enumerate(results['optimized_coords'][:-1]):
         folium.Marker(
             [lat, lon],
             popup=f"{idx + 1}. {label}",
