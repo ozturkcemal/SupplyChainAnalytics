@@ -7,7 +7,7 @@ from streamlit_folium import st_folium
 import pandas as pd
 
 st.title('TSP Solver')
-st.write('Calculate the shortest route for a single vehicle to visit multiple locations')
+st.write('Calculate the shortest route for an uncapacitated single vehicle to visit multiple locations')
 
 st.markdown("---")
 st.markdown("**References**")
