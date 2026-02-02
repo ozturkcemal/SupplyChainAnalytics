@@ -243,7 +243,7 @@ if st.session_state.results:
     )
     
     # Add numbered markers
-    for idx, (lon, lat, label) in enumerate(results['optimized_coords'][:-1]):
+    for idx, (lon, lat, label) in enumerate(results['optimized_coords'][:[:len(st.session_state.locations_df)]
         folium.Marker(
             [lat, lon],
             popup=f"{idx + 1}. {label}",
