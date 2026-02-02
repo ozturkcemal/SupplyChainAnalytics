@@ -8,6 +8,10 @@ from streamlit_folium import st_folium
 st.title('TSP Solver')
 st.write('Calculate the shortest route for a single vehicle to visit multiple locations')
 
+# Initialize session state
+if 'results' not in st.session_state:
+    st.session_state.results = None
+
 # Default coordinates
 default_coordinates = [
     [-8.4773019737901, 51.89801157949557, "Liberty Bar"],
@@ -28,15 +32,15 @@ st.header('Step 1: Enter OpenRouteService API Key')
 api_key = st.text_input('API Key:', type='password', help='Get your free API key from https://openrouteservice.org/')
 
 if api_key:
-    try:
-        client = openrouteservice.Client(key=api_key)
-        
-        st.header('Step 2: Locations')
-        st.write('Using default Cork pub locations:')
-        for coord in default_coordinates:
-            st.write(f"- {coord[2]} ({coord[1]:.4f}, {coord[0]:.4f})")
-        
-        if st.button('Solve TSP', type='primary'):
+    client = openrouteservice.Client(key=api_key)
+    
+    st.header('Step 2: Locations')
+    st.write('Using default Cork pub locations:')
+    for coord in default_coordinates:
+        st.write(f"- {coord[2]} ({coord[1]:.4f}, {coord[0]:.4f})")
+    
+    if st.button('Solve TSP', type='primary'):
+        try:
             with st.spinner('Calculating optimal route...'):
                 # Get distance matrix
                 matrix = client.distance_matrix(
@@ -89,13 +93,6 @@ if api_key:
                     
                     route_coords = [(c[1], c[0]) for c in route['features'][0]['geometry']['coordinates']]
                     
-                    # Display results
-                    st.success('✅ Optimal route found!')
-                    
-                    st.header('Optimized Route')
-                    route_labels = [label for _, _, label in optimized_coords]
-                    st.write(' → '.join(route_labels))
-                    
                     # Calculate total distance
                     coordinate_to_index = {(lon, lat): idx for idx, (lon, lat, _) in enumerate(default_coordinates)}
                     total_distance = 0
@@ -106,30 +103,56 @@ if api_key:
                         idx2 = coordinate_to_index[(lon2, lat2)]
                         total_distance += distance_matrix[idx1][idx2]
                     
-                    st.metric('Total Distance', f"{total_distance / 1000:.2f} km")
-                    
-                    # Create map
-                    st.header('Route Visualization')
-                    fmap = folium.Map(location=[optimized_coords[0][1], optimized_coords[0][0]], zoom_start=15)
-                    
-                    # Add markers with numbers
-                    for idx, (lon, lat, label) in enumerate(optimized_coords):
-                        folium.Marker(
-                            [lat, lon], 
-                            popup=f"{idx + 1}. {label}",
-                            icon=folium.Icon(color='red' if idx == 0 else 'blue')
-                        ).add_to(fmap)
-                    
-                    # Draw route
-                    folium.PolyLine(locations=route_coords, color='blue', weight=5, opacity=0.7).add_to(fmap)
-                    
-                    st_folium(fmap, width=700, height=500)
+                    # Store results in session state
+                    st.session_state.results = {
+                        'optimized_coords': optimized_coords,
+                        'route_coords': route_coords,
+                        'total_distance': total_distance
+                    }
                     
                 else:
                     st.error('No solution found')
                     
-    except Exception as e:
-        st.error(f'Error: {str(e)}')
-        st.info('Please check your API key and try again.')
+        except Exception as e:
+            st.error(f'Error: {str(e)}')
+            st.info('Please check your API key and try again.')
+    
+    # Display results if they exist
+    if st.session_state.results:
+        results = st.session_state.results
+        
+        st.success('✅ Optimal route found!')
+        
+        st.header('Optimized Route')
+        route_labels = [label for _, _, label in results['optimized_coords']]
+        st.write(' → '.join(route_labels))
+        
+        st.metric('Total Distance', f"{results['total_distance'] / 1000:.2f} km")
+        
+        # Create map
+        st.header('Route Visualization')
+        fmap = folium.Map(
+            location=[results['optimized_coords'][0][1], results['optimized_coords'][0][0]], 
+            zoom_start=15
+        )
+        
+        # Add markers with numbers
+        for idx, (lon, lat, label) in enumerate(results['optimized_coords']):
+            folium.Marker(
+                [lat, lon], 
+                popup=f"{idx + 1}. {label}",
+                icon=folium.Icon(color='red' if idx == 0 else 'blue')
+            ).add_to(fmap)
+        
+        # Draw route
+        folium.PolyLine(
+            locations=results['route_coords'], 
+            color='blue', 
+            weight=5, 
+            opacity=0.7
+        ).add_to(fmap)
+        
+        st_folium(fmap, width=700, height=500)
+        
 else:
     st.info('👆 Please enter your OpenRouteService API key to start')
