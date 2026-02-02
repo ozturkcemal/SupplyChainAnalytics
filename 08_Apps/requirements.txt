@@ -1,2 +1,6 @@
 streamlit
 stockpyl
+ortools
+openrouteservice
+folium
+streamlit-folium
