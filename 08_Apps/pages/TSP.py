@@ -31,6 +31,49 @@ if api_key:
 
     
     st.header('Step 3: Locations')
+
+        # Option to upload CSV or use manual entry
+    st.write('**Choose input method:**')
+    input_method = st.radio(
+        'Select how to enter locations:',
+        options=['Manual Entry', 'Upload CSV File'],
+        index=0,
+        horizontal=True
+    )
+    
+    if input_method == 'Upload CSV File':
+        st.info('ℹ️ **CSV File Format:** Your CSV file must contain exactly 3 columns: Name, Longitude, Latitude. No headers are required, and the number of rows should equal the number of locations you want to visit.')
+        
+        uploaded_file = st.file_uploader(
+            'Choose a CSV file',
+            type=['csv'],
+            help='Upload a CSV file with columns: Name, Longitude, Latitude'
+        )
+        
+        if uploaded_file is not None:
+            try:
+                # Read the CSV file
+                uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Longitude', 'Latitude'])
+                
+                # Validate the dataframe
+                if len(uploaded_df.columns) != 3:
+                    st.error('CSV file must have exactly 3 columns: Name, Longitude, Latitude')
+                elif uploaded_df.empty:
+                    st.error('CSV file is empty')
+                else:
+                    # Update session state
+                    st.session_state.num_locations = len(uploaded_df)
+                    st.session_state.locations_df = uploaded_df
+                    st.success(f'✓ Successfully loaded {len(uploaded_df)} locations from CSV')
+                    
+                    # Display the uploaded data
+                    st.write('**Uploaded locations:**')
+                    st.dataframe(uploaded_df, use_container_width=True)
+                    
+            except Exception as e:
+                st.error(f'Error reading CSV file: {str(e)}')
+    
+    else:  # Manual Entry
     
     # Initialize session state for locations
     if 'num_locations' not in st.session_state:
