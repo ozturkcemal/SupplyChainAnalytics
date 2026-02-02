@@ -4,6 +4,7 @@ from ortools.constraint_solver import pywrapcp
 import openrouteservice
 import folium
 from streamlit_folium import st_folium
+import pandas as pd
 
 st.title('TSP Solver')
 st.write('Calculate the shortest route for a single vehicle to visit multiple locations')
@@ -12,21 +13,6 @@ st.write('Calculate the shortest route for a single vehicle to visit multiple lo
 if 'results' not in st.session_state:
     st.session_state.results = None
 
-# Default coordinates
-default_coordinates = [
-    [-8.4773019737901, 51.89801157949557, "Liberty Bar"],
-    [-8.47839267379017, 51.89754580132632, "Dwyers"],
-    [-8.480129616118258, 51.897412860783, "Costigans"],
-    [-8.48210270262587, 51.90122750985092, "Franciscan Well"],
-    [-8.478174116118428, 51.89376597099192, "Tom Barry's"],
-    [-8.470903544953982, 51.901992373046355, "Corner House"],
-    [-8.47113337564154, 51.90199549372547, "Sin E'"],
-    [-8.4765895179699, 51.896701021615215, "An Spailpin Fanach"],
-    [-8.47664922081232, 51.89677734873688, "The Oval"],
-    [-8.466700360297953, 51.897178061440265, "Charlies"],
-    [-8.470990660298165, 51.89379653393844, "Fionbarra"],
-    [-8.469605244954147, 51.89843912054248, "The Oliver Plunkett"]
-]
 
 st.header('Step 1: Enter OpenRouteService API Key')
 api_key = st.text_input('API Key:', type='password', help='Get your free API key from https://openrouteservice.org/')
@@ -45,17 +31,62 @@ if api_key:
 
     
     st.header('Step 3: Locations')
-    st.write('Using default Cork pub locations:')
     
-    for coord in default_coordinates:
-        st.write(f"- {coord[2]} ({coord[1]:.4f}, {coord[0]:.4f})")
+    # Initialize session state for locations
+    if 'num_locations' not in st.session_state:
+        st.session_state.num_locations = 5
+    if 'locations_df' not in st.session_state:
+        st.session_state.locations_df = pd.DataFrame({
+            'Name': [''] * st.session_state.num_locations,
+            'Longitude': [0.0] * st.session_state.num_locations,
+            'Latitude': [0.0] * st.session_state.num_locations
+        })
     
+    # Ask for number of locations
+    num_locations = st.number_input(
+        'Number of locations (N):',
+        min_value=2,
+        max_value=50,
+        value=st.session_state.num_locations,
+        step=1,
+        help='Enter the number of locations to visit'
+    )
+    
+    # Update dataframe if number changed
+    if num_locations != st.session_state.num_locations:
+        st.session_state.num_locations = num_locations
+        st.session_state.locations_df = pd.DataFrame({
+            'Name': [''] * num_locations,
+            'Longitude': [0.0] * num_locations,
+            'Latitude': [0.0] * num_locations
+        })
+    
+    # Display data editor
+    st.write('Enter location details:')
+    edited_df = st.data_editor(
+        st.session_state.locations_df,
+        num_rows="fixed",
+        use_container_width=True,
+        column_config={
+            "Name": st.column_config.TextColumn("Name", required=True),
+            "Longitude": st.column_config.NumberColumn("Longitude", required=True, format="%.6f"),
+            "Latitude": st.column_config.NumberColumn("Latitude", required=True, format="%.6f")
+        }
+    )
+    
+    st.session_state.locations_df = edited_df
+    
+    # Convert dataframe to coordinates list format
+    coordinates = []
+    for idx, row in edited_df.iterrows():
+        if row['Name'] and row['Longitude'] != 0.0 and row['Latitude'] != 0.0:
+            coordinates.append([row['Longitude'], row['Latitude'], row['Name']])    
     if st.button('Solve TSP', type='primary'):
         try:
             with st.spinner('Calculating optimal route...'):
                 # Get distance matrix
                 matrix = client.distance_matrix(
-                    locations=[coord[:2] for coord in default_coordinates],
+                    locations=[coord[:2] for coord in coordinates],
                     profile=transport_profile,
                     metrics=['distance'],
                     units='m'
@@ -94,9 +125,9 @@ if api_key:
                     index = routing.Start(0)
                     while not routing.IsEnd(index):
                         node_index = manager.IndexToNode(index)
-                        optimized_coords.append(default_coordinates[node_index])
+                        optimized_coords.append(coordinates[node_index])
                         index = solution.Value(routing.NextVar(index))
-                    optimized_coords.append(default_coordinates[manager.IndexToNode(index)])
+                    optimized_coords.append(coordinates[manager.IndexToNode(index)])
                     
                     # Get actual route from ORS
                     route = client.directions(
@@ -110,7 +141,7 @@ if api_key:
                     
                     # Calculate total distance
                     coordinate_to_index = {
-                        (lon, lat): idx for idx, (lon, lat, _) in enumerate(default_coordinates)
+                        (lon, lat): idx for idx, (lon, lat, _) in enumerate(coordinates)
                     }
                     total_distance = 0
                     for i in range(len(optimized_coords) - 1):
