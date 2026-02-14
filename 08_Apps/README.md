@@ -10,6 +10,7 @@ A comprehensive Streamlit-based web application for supply chain optimization, f
 ├── pages/                        # Multi-page Streamlit apps
 │   ├── RoutingApps.py           # Routing optimization tools
 │   ├── TSP.py                   # Traveling Salesman Problem solver
+│   ├── VRP.py                   # Vehicle Routing Problem solver (CVRP)
 │   ├── 1_EOQ_Calculator.py      # Economic Order Quantity
 │   ├── 2_EOQ_wBackorders.py     # EOQ with Backorders
 │   ├── 3_JointReplenishment.py  # Joint Replenishment Problem
@@ -55,12 +56,13 @@ The application will start and be accessible at `http://localhost:8501`
 
 ### Routing Optimization Tools
 
-- **TSP (Traveling Salesman Problem)**: Solve the classic TSP to find the shortest route visiting all locations
-  - **Multiple Transport Profiles**: Choose from foot-walking, driving-car, cycling-regular, or driving-hgv
-  - **Flexible Location Input**: Enter locations manually or upload via CSV file
-  - **Interactive Map Visualization**: View optimized routes with numbered markers on an interactive map
-  - **Real-world Routing**: Uses OpenRouteService API for actual road network routing
-  - **Google OR-Tools Integration**: Leverages powerful optimization algorithms for finding optimal solutions
+- **TSP (Traveling Salesman Problem)**: Solve the classic TSP to find the shortest route visiting all locations for a single uncapacitated vehicle.
+- **VRP (Vehicle Routing Problem)**: Solve the Capacitated Vehicle Routing Problem (CVRP) for a fleet of vehicles with load constraints.
+  - **Dynamic Fleet Configuration**: Specify number of vehicles and individual vehicle capacities.
+  - **Demand Management**: Assign specific "order sizes" or demands to each location.
+  - **Multi-Route Visualization**: Each vehicle's path is rendered in a distinct color for easy identification.
+  - **Stop Sequence Markers**: Clear numbering of stops for each vehicle route.
+  - **ORS & OR-Tools**: Similar to TSP, leverages OpenRouteService for road data and Google OR-Tools for optimization.
 
 ## 🏗️ Architecture
 
@@ -81,10 +83,10 @@ mainfile = "08_Apps/SupplyChainAnalyticSuite.py"
 
 ## 🔑 API Keys
 
-The TSP solver requires an OpenRouteService API key:
+The TSP and VRP solvers require an OpenRouteService API key:
 1. Sign up for a free account at [openrouteservice.org](https://openrouteservice.org/)
 2. Generate your API key
-3. Enter the key in the TSP application interface
+3. Enter the key in the application interface (it will be remembered for the session)
 
 ## 🤝 Contributing
 
