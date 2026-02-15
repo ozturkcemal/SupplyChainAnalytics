@@ -59,12 +59,12 @@ input_method = st.radio(
 )
 
 if input_method == 'Upload CSV File':
-    st.info('ℹ️ **Format:** CSV with 4 columns: Name, Longitude, Latitude, Demand. The first row is the Depot.')
+    st.info('ℹ️ **Format:** CSV with 4 columns: Name, Latitude, Longitude, Demand. The first row is the Depot.')
     uploaded_file = st.file_uploader('Choose a CSV file', type=['csv'])
     
     if uploaded_file is not None:
         try:
-            uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Longitude', 'Latitude', 'Demand'])
+            uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Latitude', 'Longitude', 'Demand'])
             st.session_state.vrp_locations_df = uploaded_df
             st.success(f'✓ Loaded {len(uploaded_df)} locations')
         except Exception as e:
@@ -73,8 +73,8 @@ else:
     # Default values based on the Cork pubs example
     default_data = {
         'Name': ["Liberty Bar", "Dwyers", "Costigans", "Franciscan Well", "Tom Barry's", "Corner House", "Sin E'", "An Spailpin Fanach", "The Oval", "Charlies", "Fionbarra", "The Oliver Plunkett"],
-        'Longitude': [-8.477301, -8.478392, -8.480129, -8.482102, -8.478174, -8.470903, -8.471133, -8.476589, -8.476649, -8.466700, -8.470990, -8.469605],
         'Latitude': [51.898011, 51.897545, 51.897412, 51.901227, 51.893765, 51.901992, 51.901995, 51.896701, 51.896777, 51.897178, 51.893796, 51.898439],
+        'Longitude': [-8.477301, -8.478392, -8.480129, -8.482102, -8.478174, -8.470903, -8.471133, -8.476589, -8.476649, -8.466700, -8.470990, -8.469605],
         'Demand': [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
     }
     
@@ -87,8 +87,8 @@ else:
         use_container_width=True,
         column_config={
             "Name": st.column_config.TextColumn("Name", required=True),
-            "Longitude": st.column_config.NumberColumn("Long", required=True, format="%.6f"),
             "Latitude": st.column_config.NumberColumn("Lat", required=True, format="%.6f"),
+            "Longitude": st.column_config.NumberColumn("Long", required=True, format="%.6f"),
             "Demand": st.column_config.NumberColumn("Demand", required=True, min_value=0)
         }
     )
