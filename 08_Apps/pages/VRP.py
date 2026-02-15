@@ -58,16 +58,68 @@ default_data = {
     'Demand': [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
 }
 
+# 1. Initialize ALL session state keys used by widgets
 if 'vrp_locations_df' not in st.session_state:
     st.session_state.vrp_locations_df = pd.DataFrame(default_data)
+if 'editor_version' not in st.session_state:
+    st.session_state.editor_version = 0
 
-# Row Count Control
+# Calculated values for initial state
+current_max_demand = int(st.session_state.vrp_locations_df['Demand'].max())
+total_demand_init = int(st.session_state.vrp_locations_df['Demand'].sum())
+capacity_init = max(1, current_max_demand)
+vehicles_init = (total_demand_init // capacity_init) + (1 if total_demand_init % capacity_init > 0 else 0)
+
+# Pre-initialize widget keys to avoid instantiation errors
+if 'vrp_num_locations' not in st.session_state:
+    st.session_state.vrp_num_locations = len(st.session_state.vrp_locations_df)
+if 'vrp_capacity' not in st.session_state:
+    st.session_state.vrp_capacity = capacity_init
+if 'vrp_num_vehicles' not in st.session_state:
+    st.session_state.vrp_num_vehicles = max(1, vehicles_init)
+
+# 2. CSV UPLOAD LOGIC (Must come BEFORE widgets set their keys)
+with st.expander("📂 Optional: Upload Locations via CSV"):
+    st.info('ℹ️ **Format:** CSV with 4 columns: Name, Latitude, Longitude, Demand. The first row is the Depot.')
+    uploaded_file = st.file_uploader("Choose a CSV file", type=['csv'])
+    if uploaded_file is not None:
+        # Use a unique ID (name + size) to ensure we only process this file once and avoid rerun loops
+        file_id = f"{uploaded_file.name}_{uploaded_file.size}"
+        if st.session_state.get('last_processed_file') != file_id:
+            try:
+                uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Latitude', 'Longitude', 'Demand'])
+                
+                # Update data
+                st.session_state.vrp_locations_df = uploaded_df
+                
+                # Update dependent widget values in session state BEFORE they are rendered
+                new_max_demand = int(uploaded_df['Demand'].max())
+                new_total_demand = int(uploaded_df['Demand'].sum())
+                
+                st.session_state.vrp_num_locations = len(uploaded_df)
+                st.session_state.vrp_capacity = max(1, new_max_demand)
+                st.session_state.vrp_num_vehicles = max(1, (new_total_demand // st.session_state.vrp_capacity) + (1 if new_total_demand % st.session_state.vrp_capacity > 0 else 0))
+                st.session_state.editor_version += 1 # Force refresh of the table
+                
+                # Mark as processed to prevent infinite loops
+                st.session_state.last_processed_file = file_id
+                
+                st.success(f"✅ Successfully loaded {len(uploaded_df)} locations!")
+                st.rerun() 
+            except Exception as e:
+                st.error(f"❌ Error reading CSV: {e}")
+    else:
+        # Reset identifier when no file is selected
+        st.session_state.last_processed_file = None
+
+# 3. MANUAL ROW COUNT CONTROL
 current_count = len(st.session_state.vrp_locations_df)
 new_count = st.number_input(
     'Number of Locations:', 
     min_value=1, 
     max_value=50, 
-    value=current_count,
+    value=st.session_state.vrp_num_locations, # Use state value
+    key='vrp_num_locations',
     help="Set the number of rows in the table below. Adding locations will append empty rows; reducing will remove rows from the bottom."
 )
 
@@ -86,25 +138,13 @@ if new_count != current_count:
         st.session_state.vrp_locations_df = pd.concat([st.session_state.vrp_locations_df, new_rows], ignore_index=True)
     st.rerun()
 
-# CSV Upload Option
-with st.expander("📂 Optional: Upload Locations via CSV"):
-    st.info('ℹ️ **Format:** CSV with 4 columns: Name, Latitude, Longitude, Demand. The first row is the Depot.')
-    uploaded_file = st.file_uploader('Choose a CSV file', type=['csv'])
-    
-    if uploaded_file is not None:
-        try:
-            uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Latitude', 'Longitude', 'Demand'])
-            st.session_state.vrp_locations_df = uploaded_df
-            st.success(f'✓ Loaded {len(uploaded_df)} locations')
-            st.rerun() # Refresh to update the data editor below
-        except Exception as e:
-            st.error(f'Error loading CSV: {str(e)}')
-
-# Data Editor Table (Always Visible)
+# 4. DATA EDITOR
+st.subheader("Edit Locations & Demands Below")
 edited_df = st.data_editor(
     st.session_state.vrp_locations_df,
     num_rows="dynamic",
     use_container_width=True,
+    key=f"editor_{st.session_state.editor_version}",
     column_config={
         "Name": st.column_config.TextColumn("Name", required=True),
         "Latitude": st.column_config.NumberColumn("Lat", required=True, format="%.6f"),
@@ -112,27 +152,38 @@ edited_df = st.data_editor(
         "Demand": st.column_config.NumberColumn("Demand", required=True, min_value=0)
     }
 )
+
+# Update session state with edited values
 st.session_state.vrp_locations_df = edited_df
 
 # Step 3: Fleet Settings
 st.header('Step 3: Fleet Configuration')
-total_demand = st.session_state.vrp_locations_df['Demand'].sum()
-max_demand = st.session_state.vrp_locations_df['Demand'].max()
+
+# Recalculate demands for Step 3 logic
+total_demand = int(st.session_state.vrp_locations_df['Demand'].sum())
+max_demand = int(st.session_state.vrp_locations_df['Demand'].max())
 
 col_v1, col_v2 = st.columns(2)
 with col_v1:
-    vehicle_capacity = st.number_input('Vehicle Capacity (units):', min_value=1, max_value=10000, value=max(1, int(max_demand)))
+    vehicle_capacity = st.number_input(
+        'Vehicle Capacity (units):', 
+        min_value=1, 
+        max_value=10000, 
+        value=st.session_state.vrp_capacity, # Use state value
+        key='vrp_capacity'
+    )
     
     if vehicle_capacity < max_demand:
         st.warning(f"⚠️ **Caution:** Your vehicle capacity ({vehicle_capacity}) is less than the maximum demand of a single location ({max_demand}). This will make the problem impossible to solve.")
 
 with col_v2:
-    suggested_vehicles = math.ceil(total_demand / vehicle_capacity) if vehicle_capacity > 0 else 1
+    suggested_vehicles = (total_demand // vehicle_capacity) + (1 if total_demand % vehicle_capacity > 0 else 0)
     num_vehicles = st.number_input(
         'Number of Vehicles:', 
         min_value=1, 
         max_value=20, 
-        value=max(1, suggested_vehicles),
+        value=st.session_state.vrp_num_vehicles, # Use state value
+        key='vrp_num_vehicles',
         help=f"Based on total demand ({total_demand}) and capacity ({vehicle_capacity}), the minimum required is {suggested_vehicles}."
     )
 
@@ -188,13 +239,19 @@ if api_key and st.button('Optimize VRP Routes', type='primary'):
 
         if solution:
             all_routes = []
+            node_to_vehicle = {} # Map node names to assigned vehicle numbers
             for vehicle_id in range(data['num_vehicles']):
                 index = routing.Start(vehicle_id)
                 route = []
+                seq = 0
                 while not routing.IsEnd(index):
                     node_idx = manager.IndexToNode(index)
-                    route.append({'name': names[node_idx], 'coord': coords[node_idx], 'demand': demands[node_idx]})
+                    node_name = names[node_idx]
+                    route.append({'name': node_name, 'coord': coords[node_idx], 'demand': demands[node_idx]})
+                    if node_idx != 0: # Skip depot for mapping
+                        node_to_vehicle[node_name] = f"Vehicle {vehicle_id + 1} (Stop {seq})"
                     index = solution.Value(routing.NextVar(index))
+                    seq += 1
                 # Add depot at end
                 node_idx = manager.IndexToNode(index)
                 route.append({'name': names[node_idx], 'coord': coords[node_idx], 'demand': demands[node_idx]})
@@ -216,6 +273,7 @@ if api_key and st.button('Optimize VRP Routes', type='primary'):
             st.session_state.vrp_results = {
                 'routes': all_routes,
                 'geometries': geometries,
+                'node_to_vehicle': node_to_vehicle,
                 'summary': locations_df # For reference
             }
         else:
@@ -243,10 +301,12 @@ if st.session_state.vrp_results:
     fmap.fit_bounds([sw, ne])
 
     # Add markers for all specified locations
+    node_to_vehicle = res.get('node_to_vehicle', {})
     for idx, row in st.session_state.vrp_locations_df.iterrows():
+        assignment_text = node_to_vehicle.get(row['Name'], "Unassigned/Depot")
         folium.Marker(
             [row['Latitude'], row['Longitude']],
-            popup=f"<b>{row['Name']}</b><br>Demand: {row['Demand']}",
+            popup=f"<b>{row['Name']}</b><br>Demand: {row['Demand']}<br>Assigned to: {assignment_text}",
             icon=folium.Icon(color='black' if idx == 0 else 'gray')
         ).add_to(fmap)
 
@@ -264,7 +324,8 @@ if st.session_state.vrp_results:
                     color=color,
                     fill=True,
                     fill_color=color,
-                    popup=f"Stop {seq}: {point['name']}"
+                    popup=f"Vehicle {i+1} - Stop {seq}: {point['name']}",
+                    tooltip=f"Vehicle {i+1} - Stop {seq}"
                 ).add_to(fmap)
 
     st_folium(fmap, use_container_width=True, height=600)
