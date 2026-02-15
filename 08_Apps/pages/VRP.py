@@ -6,6 +6,7 @@ import folium
 from streamlit_folium import st_folium
 import pandas as pd
 import time
+import math
 
 st.set_page_config(page_title="VRP Solver", layout="wide")
 
@@ -46,16 +47,8 @@ with col1:
 with col2:
     st.info("The first location in your list will always be treated as the **Depot** (Starting/Ending point).")
 
-# Step 2: Fleet Settings
-st.header('Step 2: Fleet Configuration')
-col_v1, col_v2 = st.columns(2)
-with col_v1:
-    num_vehicles = st.number_input('Number of Vehicles:', min_value=1, max_value=20, value=4)
-with col_v2:
-    vehicle_capacity = st.number_input('Vehicle Capacity (units):', min_value=1, max_value=10000, value=400)
-
-# Step 3: Locations & Demands
-st.header('Step 3: Locations & Demands')
+# Step 2: Locations & Demands
+st.header('Step 2: Locations & Demands')
 
 # Option to upload CSV or use manual entry
 input_method = st.radio(
@@ -100,6 +93,28 @@ else:
         }
     )
     st.session_state.vrp_locations_df = edited_df
+
+# Step 3: Fleet Settings
+st.header('Step 3: Fleet Configuration')
+total_demand = st.session_state.vrp_locations_df['Demand'].sum()
+max_demand = st.session_state.vrp_locations_df['Demand'].max()
+
+col_v1, col_v2 = st.columns(2)
+with col_v1:
+    vehicle_capacity = st.number_input('Vehicle Capacity (units):', min_value=1, max_value=10000, value=400)
+    
+    if vehicle_capacity < max_demand:
+        st.warning(f"⚠️ **Caution:** Your vehicle capacity ({vehicle_capacity}) is less than the maximum demand of a single location ({max_demand}). This will make the problem impossible to solve.")
+
+with col_v2:
+    suggested_vehicles = math.ceil(total_demand / vehicle_capacity) if vehicle_capacity > 0 else 1
+    num_vehicles = st.number_input(
+        'Number of Vehicles:', 
+        min_value=1, 
+        max_value=20, 
+        value=max(1, suggested_vehicles),
+        help=f"Based on total demand ({total_demand}) and capacity ({vehicle_capacity}), the minimum required is {suggested_vehicles}."
+    )
 
 # Solve Button
 if api_key and st.button('Optimize VRP Routes', type='primary'):
