@@ -50,15 +50,44 @@ with col2:
 # Step 2: Locations & Demands
 st.header('Step 2: Locations & Demands')
 
-# Option to upload CSV or use manual entry
-input_method = st.radio(
-    'Select input method:',
-    options=['Manual Entry', 'Upload CSV File'],
-    index=0,
-    horizontal=True
+# Initialize session state with default data if not present
+default_data = {
+    'Name': ["Liberty Bar", "Dwyers", "Costigans", "Franciscan Well", "Tom Barry's", "Corner House", "Sin E'", "An Spailpin Fanach", "The Oval", "Charlies", "Fionbarra", "The Oliver Plunkett"],
+    'Latitude': [51.898011, 51.897545, 51.897412, 51.901227, 51.893765, 51.901992, 51.901995, 51.896701, 51.896777, 51.897178, 51.893796, 51.898439],
+    'Longitude': [-8.477301, -8.478392, -8.480129, -8.482102, -8.478174, -8.470903, -8.471133, -8.476589, -8.476649, -8.466700, -8.470990, -8.469605],
+    'Demand': [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
+}
+
+if 'vrp_locations_df' not in st.session_state:
+    st.session_state.vrp_locations_df = pd.DataFrame(default_data)
+
+# Row Count Control
+current_count = len(st.session_state.vrp_locations_df)
+new_count = st.number_input(
+    'Number of Locations:', 
+    min_value=1, 
+    max_value=50, 
+    value=current_count,
+    help="Set the number of rows in the table below. Adding locations will append empty rows; reducing will remove rows from the bottom."
 )
 
-if input_method == 'Upload CSV File':
+if new_count != current_count:
+    if new_count < current_count:
+        st.session_state.vrp_locations_df = st.session_state.vrp_locations_df.iloc[:new_count]
+    else:
+        # Append empty rows
+        to_add = new_count - current_count
+        new_rows = pd.DataFrame({
+            'Name': [f"Location {current_count + i + 1}" for i in range(to_add)],
+            'Latitude': [51.89] * to_add,
+            'Longitude': [-8.47] * to_add,
+            'Demand': [100] * to_add
+        })
+        st.session_state.vrp_locations_df = pd.concat([st.session_state.vrp_locations_df, new_rows], ignore_index=True)
+    st.rerun()
+
+# CSV Upload Option
+with st.expander("📂 Optional: Upload Locations via CSV"):
     st.info('ℹ️ **Format:** CSV with 4 columns: Name, Latitude, Longitude, Demand. The first row is the Depot.')
     uploaded_file = st.file_uploader('Choose a CSV file', type=['csv'])
     
@@ -67,32 +96,23 @@ if input_method == 'Upload CSV File':
             uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Latitude', 'Longitude', 'Demand'])
             st.session_state.vrp_locations_df = uploaded_df
             st.success(f'✓ Loaded {len(uploaded_df)} locations')
+            st.rerun() # Refresh to update the data editor below
         except Exception as e:
-            st.error(f'Error: {str(e)}')
-else:
-    # Default values based on the Cork pubs example
-    default_data = {
-        'Name': ["Liberty Bar", "Dwyers", "Costigans", "Franciscan Well", "Tom Barry's", "Corner House", "Sin E'", "An Spailpin Fanach", "The Oval", "Charlies", "Fionbarra", "The Oliver Plunkett"],
-        'Latitude': [51.898011, 51.897545, 51.897412, 51.901227, 51.893765, 51.901992, 51.901995, 51.896701, 51.896777, 51.897178, 51.893796, 51.898439],
-        'Longitude': [-8.477301, -8.478392, -8.480129, -8.482102, -8.478174, -8.470903, -8.471133, -8.476589, -8.476649, -8.466700, -8.470990, -8.469605],
-        'Demand': [0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100]
-    }
-    
-    if 'vrp_locations_df' not in st.session_state:
-        st.session_state.vrp_locations_df = pd.DataFrame(default_data)
+            st.error(f'Error loading CSV: {str(e)}')
 
-    edited_df = st.data_editor(
-        st.session_state.vrp_locations_df,
-        num_rows="dynamic",
-        use_container_width=True,
-        column_config={
-            "Name": st.column_config.TextColumn("Name", required=True),
-            "Latitude": st.column_config.NumberColumn("Lat", required=True, format="%.6f"),
-            "Longitude": st.column_config.NumberColumn("Long", required=True, format="%.6f"),
-            "Demand": st.column_config.NumberColumn("Demand", required=True, min_value=0)
-        }
-    )
-    st.session_state.vrp_locations_df = edited_df
+# Data Editor Table (Always Visible)
+edited_df = st.data_editor(
+    st.session_state.vrp_locations_df,
+    num_rows="dynamic",
+    use_container_width=True,
+    column_config={
+        "Name": st.column_config.TextColumn("Name", required=True),
+        "Latitude": st.column_config.NumberColumn("Lat", required=True, format="%.6f"),
+        "Longitude": st.column_config.NumberColumn("Long", required=True, format="%.6f"),
+        "Demand": st.column_config.NumberColumn("Demand", required=True, min_value=0)
+    }
+)
+st.session_state.vrp_locations_df = edited_df
 
 # Step 3: Fleet Settings
 st.header('Step 3: Fleet Configuration')
@@ -101,7 +121,7 @@ max_demand = st.session_state.vrp_locations_df['Demand'].max()
 
 col_v1, col_v2 = st.columns(2)
 with col_v1:
-    vehicle_capacity = st.number_input('Vehicle Capacity (units):', min_value=1, max_value=10000, value=400)
+    vehicle_capacity = st.number_input('Vehicle Capacity (units):', min_value=1, max_value=10000, value=max(1, int(max_demand)))
     
     if vehicle_capacity < max_demand:
         st.warning(f"⚠️ **Caution:** Your vehicle capacity ({vehicle_capacity}) is less than the maximum demand of a single location ({max_demand}). This will make the problem impossible to solve.")
@@ -213,9 +233,14 @@ if st.session_state.vrp_results:
     st.header('Optimized Fleet Map')
     colors = ['blue', 'red', 'green', 'purple', 'orange', 'cadetblue', 'darkred', 'darkgreen', 'darkpurple', 'pink']
     
-    center_lat = st.session_state.vrp_locations_df.iloc[0]['Latitude']
-    center_lon = st.session_state.vrp_locations_df.iloc[0]['Longitude']
-    fmap = folium.Map(location=[center_lat, center_lon], zoom_start=14)
+    # Calculate bounds to capture all locations
+    lats = st.session_state.vrp_locations_df['Latitude']
+    lons = st.session_state.vrp_locations_df['Longitude']
+    sw = [lats.min(), lons.min()]
+    ne = [lats.max(), lons.max()]
+    
+    fmap = folium.Map()
+    fmap.fit_bounds([sw, ne])
 
     # Add markers for all specified locations
     for idx, row in st.session_state.vrp_locations_df.iterrows():
