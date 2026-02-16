@@ -16,7 +16,8 @@ st.write('  - **Periodic Review Optimizer**: Calculate the Wagner Whitin algorit
 
 st.write('### Routing Apps')
 
-st.write('  - Traveling Salesman Problems')
+st.write('  - **Traveling Salesman Problem**')
+st.write('  - **Vehicle Routing Problem**')
 st.write('')
 st.write('More tools coming soon!')
 st.write('contact: cemalettin.ozturk01@gmail.com')
