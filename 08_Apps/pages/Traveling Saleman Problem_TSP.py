@@ -6,6 +6,73 @@ import folium
 from streamlit_folium import st_folium
 import pandas as pd
 
+# Cache API calls to improve performance
+@st.cache_data(show_spinner=False)
+def get_distance_matrix(locations, profile, api_key):
+    """
+    Fetch distance matrix from OpenRouteService.
+    Cached to prevent redundant API calls for the same inputs.
+    """
+    client = openrouteservice.Client(key=api_key)
+    matrix = client.distance_matrix(
+        locations=locations,
+        profile=profile,
+        metrics=['distance'],
+        units='m'
+    )
+    return matrix['distances']
+
+@st.cache_data(show_spinner=False)
+def get_directions(coordinates, profile, api_key):
+    """
+    Fetch route geometry from OpenRouteService.
+    Cached to prevent redundant API calls for the same inputs.
+    """
+    client = openrouteservice.Client(key=api_key)
+    route = client.directions(
+        coordinates=coordinates,
+        profile=profile,
+        format='geojson'
+    )
+    return [(c[1], c[0]) for c in route['features'][0]['geometry']['coordinates']]
+
+def solve_tsp(distance_matrix, depot_index=0):
+    """
+    Solve TSP using Google OR-Tools.
+    Returns the optimized path indices and the total distance.
+    """
+    num_locations = len(distance_matrix)
+    num_vehicles = 1
+    
+    # Create routing model
+    manager = pywrapcp.RoutingIndexManager(num_locations, num_vehicles, depot_index)
+    routing = pywrapcp.RoutingModel(manager)
+
+    def distance_callback(from_index, to_index):
+        from_node = manager.IndexToNode(from_index)
+        to_node = manager.IndexToNode(to_index)
+        return int(distance_matrix[from_node][to_node])
+
+    transit_callback_index = routing.RegisterTransitCallback(distance_callback)
+    routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
+
+    search_parameters = pywrapcp.DefaultRoutingSearchParameters()
+    search_parameters.first_solution_strategy = (
+        routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
+
+    solution = routing.SolveWithParameters(search_parameters)
+
+    if solution:
+        index = routing.Start(0)
+        route_indices = []
+        while not routing.IsEnd(index):
+            route_indices.append(manager.IndexToNode(index))
+            index = solution.Value(routing.NextVar(index))
+        route_indices.append(manager.IndexToNode(index))  # Return to depot
+        
+        return route_indices, solution.ObjectiveValue()
+    return None, 0
+
 st.title('TSP Solver')
 st.write('Calculate the shortest route for an uncapacitated single vehicle to visit multiple locations')
 
@@ -34,8 +101,6 @@ st.header('Step 1: Enter OpenRouteService API Key')
 api_key = st.text_input('API Key:', type='password', help='Get your free API key from https://openrouteservice.org/')
 
 if api_key:
-    client = openrouteservice.Client(key=api_key)
-
     # Transport profile selection
     st.header('Step 2: Select Transport Profile')
     transport_profile = st.selectbox(
@@ -58,22 +123,22 @@ if api_key:
     )
     
     if input_method == 'Upload CSV File':
-        st.info('ℹ️ **CSV File Format:** Your CSV file must contain exactly 3 columns: Name, Longitude, Latitude. No headers are required, and the number of rows should equal the number of locations you want to visit.')
+        st.info('ℹ️ **CSV File Format:** Your CSV file must contain exactly 3 columns: Location, Latitude, Longitude. No headers are required, and the number of rows should equal the number of locations you want to visit.')
         
         uploaded_file = st.file_uploader(
             'Choose a CSV file',
             type=['csv'],
-            help='Upload a CSV file with columns: Name, Longitude, Latitude'
+            help='Upload a CSV file with columns: Location, Latitude, Longitude'
         )
         
         if uploaded_file is not None:
             try:
                 # Read the CSV file
-                uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Name', 'Longitude', 'Latitude'])
+                uploaded_df = pd.read_csv(uploaded_file, header=None, names=['Location', 'Latitude', 'Longitude'])
                 
                 # Validate the dataframe
                 if len(uploaded_df.columns) != 3:
-                    st.error('CSV file must have exactly 3 columns: Name, Longitude, Latitude')
+                    st.error('CSV file must have exactly 3 columns: Location, Latitude, Longitude')
                 elif uploaded_df.empty:
                     st.error('CSV file is empty')
                 else:
@@ -95,9 +160,9 @@ if api_key:
             st.session_state.num_locations = 5
         if 'locations_df' not in st.session_state:
             st.session_state.locations_df = pd.DataFrame({
-                'Name': [''] * st.session_state.num_locations,
-                'Longitude': [0.0] * st.session_state.num_locations,
-                'Latitude': [0.0] * st.session_state.num_locations
+                'Location': [''] * st.session_state.num_locations,
+                'Latitude': [0.0] * st.session_state.num_locations,
+                'Longitude': [0.0] * st.session_state.num_locations
             })
         
         # Ask for number of locations
@@ -114,9 +179,9 @@ if api_key:
         if num_locations != st.session_state.num_locations:
             st.session_state.num_locations = num_locations
             st.session_state.locations_df = pd.DataFrame({
-                'Name': [''] * num_locations,
-                'Longitude': [0.0] * num_locations,
-                'Latitude': [0.0] * num_locations
+                'Location': [''] * num_locations,
+                'Latitude': [0.0] * num_locations,
+                'Longitude': [0.0] * num_locations
             })
         
         # Display data editor
@@ -126,9 +191,9 @@ if api_key:
             num_rows="fixed",
             use_container_width=True,
             column_config={
-                "Name": st.column_config.TextColumn("Name", required=True),
-                "Longitude": st.column_config.NumberColumn("Longitude", required=True, format="%.6f"),
-                "Latitude": st.column_config.NumberColumn("Latitude", required=True, format="%.6f")
+                "Location": st.column_config.TextColumn("Location", required=True),
+                "Latitude": st.column_config.NumberColumn("Latitude", required=True, format="%.6f"),
+                "Longitude": st.column_config.NumberColumn("Longitude", required=True, format="%.6f")
             }
         )
         
@@ -138,78 +203,31 @@ if api_key:
     coordinates = []
     if 'locations_df' in st.session_state:
         for idx, row in st.session_state.locations_df.iterrows():
-            if row['Name'] and row['Longitude'] != 0.0 and row['Latitude'] != 0.0:
-                coordinates.append([row['Longitude'], row['Latitude'], row['Name']])
+            if row['Location'] and row['Latitude'] != 0.0 and row['Longitude'] != 0.0:
+                # ORS requires [Longitude, Latitude]
+                coordinates.append([row['Longitude'], row['Latitude'], row['Location']])
     
     if st.button('Solve TSP', type='primary'):
         try:
             with st.spinner('Calculating optimal route...'):
+                locations_coords = [coord[:2] for coord in coordinates]
+                
                 # Get distance matrix
-                matrix = client.distance_matrix(
-                    locations=[coord[:2] for coord in coordinates],
-                    profile=transport_profile,
-                    metrics=['distance'],
-                    units='m'
-                )
-                distance_matrix = matrix['distances']
+                distance_matrix = get_distance_matrix(locations_coords, transport_profile, api_key)
                 
-                # Create data model
-                data = {}
-                data['distance_matrix'] = distance_matrix
-                data['num_vehicles'] = 1
-                data['depot'] = 0
+                # Solve TSP
+                route_indices, total_distance = solve_tsp(distance_matrix)
                 
-                # Create routing model
-                manager = pywrapcp.RoutingIndexManager(len(data['distance_matrix']), 
-                                                       data['num_vehicles'], 
-                                                       data['depot'])
-                routing = pywrapcp.RoutingModel(manager)
-                
-                def distance_callback(from_index, to_index):
-                    from_node = manager.IndexToNode(from_index)
-                    to_node = manager.IndexToNode(to_index)
-                    return int(data['distance_matrix'][from_node][to_node])
-                
-                transit_callback_index = routing.RegisterTransitCallback(distance_callback)
-                routing.SetArcCostEvaluatorOfAllVehicles(transit_callback_index)
-                
-                search_parameters = pywrapcp.DefaultRoutingSearchParameters()
-                search_parameters.first_solution_strategy = (
-                    routing_enums_pb2.FirstSolutionStrategy.PATH_CHEAPEST_ARC)
-                
-                solution = routing.SolveWithParameters(search_parameters)
-                
-                if solution:
+                if route_indices:
                     # Get optimized order
-                    optimized_coords = []
-                    index = routing.Start(0)
-                    while not routing.IsEnd(index):
-                        node_index = manager.IndexToNode(index)
-                        optimized_coords.append(coordinates[node_index])
-                        index = solution.Value(routing.NextVar(index))
-                    optimized_coords.append(coordinates[manager.IndexToNode(index)])
+                    optimized_coords = [coordinates[i] for i in route_indices]
                     
                     # Get actual route from ORS
-                    route = client.directions(
-                        coordinates=[coord[:2] for coord in optimized_coords],
-                        profile=transport_profile,
-                        format='geojson'
+                    route_coords = get_directions(
+                        [coord[:2] for coord in optimized_coords],
+                        transport_profile,
+                        api_key
                     )
-                    
-                    # Extract route coordinates
-                    route_coords = [(c[1], c[0]) for c in route['features'][0]['geometry']['coordinates']]
-                    
-                    # Calculate total distance
-                    coordinate_to_index = {
-                        (lon, lat): idx for idx, (lon, lat, _) in enumerate(coordinates)
-                    }
-                    total_distance = 0
-                    for i in range(len(optimized_coords) - 1):
-                        lon1, lat1, _ = optimized_coords[i]
-                        lon2, lat2, _ = optimized_coords[i + 1]
-                        idx1 = coordinate_to_index[(lon1, lat1)]
-                        idx2 = coordinate_to_index[(lon2, lat2)]
-                        total_distance += distance_matrix[idx1][idx2]
                     
                     st.session_state.results = {
                         'optimized_coords': optimized_coords,
