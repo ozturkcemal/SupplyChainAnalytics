@@ -338,11 +338,14 @@ def main():
     st.write('Optimize routes for multiple vehicles with load constraints')
     
     st.markdown("---")
-    st.markdown("**References**\n"
-                "[1] [Vehicle Routing Problem](https://en.wikipedia.org/wiki/Vehicle_routing_problem)\n"
-                "[2] [Google OR-Tools CVRP](https://developers.google.com/optimization/routing/cvrp)\n"
-                "[3] [OpenRouteService](https://openrouteservice.org/)\n"
-                "---\n")
+    st.markdown("**References**\n")
+    st.markdown("[1] Vehicle Routing Problem"
+    "https://en.wikipedia.org/wiki/Vehicle_routing_problem\n"
+    "[2] Google OR-Tools CVRP"
+    "https://developers.google.com/optimization/routing/cvrp\n"
+    "[3] OpenRouteService"
+    "https://openrouteservice.org/\n"
+    "---\n")
 
     init_session_state()
 
