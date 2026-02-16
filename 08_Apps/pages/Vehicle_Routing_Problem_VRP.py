@@ -340,16 +340,16 @@ def main():
     st.markdown("---")
     st.markdown("**References**\n")
     st.markdown(
-        "[1] Vehicle Routing Problem"
+        "[1] Vehicle Routing Problem. "
         "https://en.wikipedia.org/wiki/Vehicle_routing_problem"
     )   
 
     st.markdown(
-        "[2] Google OR-Tools CVRP"
+        "[2] Google OR-Tools CVRP. "
         "https://developers.google.com/optimization/routing/cvrp"
     )
     st.markdown(
-        "[3] OpenRouteService"
+        "[3] OpenRouteService. "
         "https://openrouteservice.org/"
     )
     st.markdown("---")
