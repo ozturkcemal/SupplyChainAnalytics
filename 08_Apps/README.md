@@ -6,21 +6,21 @@ A comprehensive Streamlit-based web application for supply chain optimization, f
 
 ```
 08_Apps/
-├── SupplyChainAnalyticSuite.py  # Main entry point
-├── pages/                        # Multi-page Streamlit apps
-│   ├── RoutingApps.py           # Routing optimization tools
-│   ├── TSP.py                   # Traveling Salesman Problem solver
-│   ├── VRP.py                   # Vehicle Routing Problem solver (CVRP)
-│   ├── 1_EOQ_Calculator.py      # Economic Order Quantity
-│   ├── 2_EOQ_wBackorders.py     # EOQ with Backorders
-│   ├── 3_JointReplenishment.py  # Joint Replenishment Problem
-│   ├── 4_Newsvendor.py          # Newsvendor Model
-│   └── 5_PeriodicReview(WagnerW..)# Wagner-Whitin Algorithm
-├── routing/                      # Routing notebooks and data
+├── SupplyChainAnalyticSuite.py         # Main entry point
+├── pages/                               # Multi-page Streamlit apps
+│   ├── 1_EOQ_Calculator.py             # Economic Order Quantity
+│   ├── 2_EOQ_wBackorders.py            # EOQ with Backorders
+│   ├── 3_JointReplenishment.py         # Joint Replenishment Problem
+│   ├── 4_Newsvendor.py                 # Newsvendor Model
+│   ├── 5_PeriodicReview(WagnerWhitin).py # Wagner-Whitin Algorithm
+│   ├── RoutingApps.py                  # Routing optimization hub
+│   ├── Traveling Saleman Problem_TSP.py # Traveling Salesman Problem solver
+│   └── Vehicle_Routing_Problem_VRP.py   # Vehicle Routing Problem solver (CVRP)
+├── routing/                             # Routing notebooks and data
 │   └── TSP_singleCellNotebook.ipynb
-├── .streamlit/                   # Streamlit configuration
-│   └── config.toml              # App configuration
-└── requirements.txt              # Python dependencies
+├── .streamlit/                          # Streamlit configuration
+│   └── config.toml                     # App configuration
+└── requirements.txt                     # Python dependencies
 ```
 
 ## 🚀 Getting Started
