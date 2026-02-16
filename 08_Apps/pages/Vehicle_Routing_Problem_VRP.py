@@ -342,7 +342,7 @@ def main():
     st.markdown(
         "[1] Vehicle Routing Problem"
         "https://en.wikipedia.org/wiki/Vehicle_routing_problem"
-    )    
+    )   
 
     st.markdown(
         "[2] Google OR-Tools CVRP"
