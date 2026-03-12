@@ -5,6 +5,7 @@ import openrouteservice
 import folium
 from streamlit_folium import st_folium
 import pandas as pd
+from folium.plugins import AntPath
 
 # Cache API calls to improve performance
 @st.cache_data(show_spinner=False)
@@ -268,12 +269,14 @@ if st.session_state.results:
             icon=folium.Icon(color='red' if idx == 0 else 'blue')
         ).add_to(fmap)
     
-    # Draw complete route
-    folium.PolyLine(
+    # Draw complete route with AntPath
+    AntPath(
         locations=results['route_coords'],
         color='blue',
         weight=5,
-        opacity=0.7
+        opacity=0.7,
+        delay=1000,
+        pulse_color='#FFFFFF'
     ).add_to(fmap)
     
     st_folium(fmap, width=700, height=500)
