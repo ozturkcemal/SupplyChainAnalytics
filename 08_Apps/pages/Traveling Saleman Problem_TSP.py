@@ -35,7 +35,24 @@ def get_directions(coordinates, profile, api_key):
         profile=profile,
         format='geojson'
     )
-    return [(c[1], c[0]) for c in route['features'][0]['geometry']['coordinates']]
+    
+    all_coords = [(c[1], c[0]) for c in route['features'][0]['geometry']['coordinates']]
+    
+    # Extract segments (legs) from the response
+    # The 'segments' property tells us the path between individual waypoints
+    legs = []
+    current_idx = 0
+    for segment in route['features'][0]['properties']['segments']:
+        # Each segment corresponds to travel between two points
+        # We find the coordinate indices for this segment
+        start_idx = segment['steps'][0]['way_points'][0]
+        end_idx = segment['steps'][-1]['way_points'][1]
+        legs.append(all_coords[start_idx:end_idx + 1])
+        
+    return {
+        'full_path': all_coords,
+        'legs': legs
+    }
 
 def solve_tsp(distance_matrix, depot_index=0):
     """
@@ -224,7 +241,7 @@ if api_key:
                     optimized_coords = [coordinates[i] for i in route_indices]
                     
                     # Get actual route from ORS
-                    route_coords = get_directions(
+                    route_data = get_directions(
                         [coord[:2] for coord in optimized_coords],
                         transport_profile,
                         api_key
@@ -232,7 +249,7 @@ if api_key:
                     
                     st.session_state.results = {
                         'optimized_coords': optimized_coords,
-                        'route_coords': route_coords,
+                        'route_legs': route_data['legs'],
                         'total_distance': total_distance
                     }
                 else:
@@ -250,7 +267,20 @@ if st.session_state.results:
     # Display route information
     st.header('Optimized Route')
     route_labels = [label for _, _, label in results['optimized_coords']]
-    st.write(' → '.join(route_labels))
+    
+    # Sequential Slider
+    max_steps = len(results['optimized_coords']) 
+    step_idx = st.slider(
+        '**Observe Route Step-by-Step**', 
+        min_value=1, 
+        max_value=max_steps, 
+        value=max_steps,
+        help="Use the slider to see how the path is built from start to end."
+    )
+    
+    # Filter labels based on slider
+    visible_labels = route_labels[:step_idx]
+    st.write(' → '.join(visible_labels))
     
     st.metric('Total Distance', f"{results['total_distance'] / 1000:.2f} km")
     
@@ -261,23 +291,27 @@ if st.session_state.results:
         zoom_start=15
     )
     
-    # Add numbered markers
-    for idx, (lon, lat, label) in enumerate(results['optimized_coords'][:-1]):
+    # Add numbered markers up to selected step
+    for idx, (lon, lat, label) in enumerate(results['optimized_coords'][:step_idx]):
+        # The last point in the sequence is the return to depot
+        is_last = (idx == len(results['optimized_coords']) - 1)
         folium.Marker(
             [lat, lon],
             popup=f"{idx + 1}. {label}",
-            icon=folium.Icon(color='red' if idx == 0 else 'blue')
+            icon=folium.Icon(color='red' if idx == 0 else 'blue', icon='info-sign')
         ).add_to(fmap)
     
-    # Draw complete route with AntPath
-    AntPath(
-        locations=results['route_coords'],
-        color='blue',
-        weight=5,
-        opacity=0.7,
-        delay=1000,
-        pulse_color='#FFFFFF'
-    ).add_to(fmap)
+    # Draw legs up to selected step
+    for leg_idx in range(step_idx - 1):
+        if leg_idx < len(results['route_legs']):
+            AntPath(
+                locations=results['route_legs'][leg_idx],
+                color='blue',
+                weight=5,
+                opacity=0.7,
+                delay=1000,
+                pulse_color='#FFFFFF'
+            ).add_to(fmap)
     
     st_folium(fmap, width=700, height=500)
 else:
